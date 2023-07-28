@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "http://docs.oasis-open.org/dita/v1.1/OS/dtd/topic.dtd"[]>
+<menus>
+    <menu categorie="fichiers">
+        <lien>
+            <label>Nouvelle partie</label>
+            <command>new_party</command>
+        </lien>
+        <lien>
+            <menu categorie="Niveaux">
+                <lien>
+                    <label>Developpeur</label>
+                    <command>lambda: self.niveau("Developpeur")</command>
+                </lien>
+                <lien>
+                    <label>Designer</label>
+                    <command>lambda: self.niveau("Designer")</command>
+                </lien>
+            </menu>
+        </lien>
+        <lien>
+            <label>Apparence </label>
+            <command>apparence</command>
+        </lien>
+        <lien>
+            <label>Quitter </label>
+            <command>destroy</command>
+        </lien>
+    </menu>
+    <menu categorie="édition">
+        <lien>
+            <label>Editer les mots </label>
+            <command>edit_mot</command>
+        </lien>
+        <lien>
+            <label>Editer les niveaux </label>
+            <command>edit_niveau</command>
+        </lien>
+    </menu>
+    <menu categorie="aide">
+        <lien>
+            <label>A propos</label>
+            <command>propos</command>
+        </lien>
+    </menu>
+</menus>
