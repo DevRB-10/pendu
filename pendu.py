@@ -46,6 +46,7 @@ class App(object):
         self.mot()
         self.avancement_mot = []
         self.cpt = 0
+        self.perdu = 0
 
     def caneva(self):
         self.canevas = Canvas(self.root, width=200, height=200, background=self.bg_canevas)
@@ -53,7 +54,7 @@ class App(object):
 
     def menu(self):
         fichier_xml = "menus.xml"
-        #fichier_xml = "menus_sauv.xml"
+        #fichier_xml = "menus_base.xml"
         tree = ET.parse(fichier_xml)
         myroot = tree.getroot()
         menubar = Menu(self.root)
@@ -70,6 +71,12 @@ class App(object):
                     nb_sous_menu += 1
                     truc_sous_menu = Menu(truc_menu, tearoff=0)
                     nb_sous_lien = 0
+                    nom_sous_lien = []
+                    nb_label_sous_lien = 0
+                    x=0
+                    for sous_lien in sous_menu.findall('lien'):
+                        nb_label_sous_lien += 1
+                        x += 1
                     for sous_lien in sous_menu.findall('lien'):
                         nb_sous_lien += 1
                         #print(str(nb_sous_menu) + menu.attrib['categorie'].capitalize(), " -> ", 
@@ -77,15 +84,30 @@ class App(object):
                         # sous_lien.find('label').text + ": " + sous_lien.find('command').text)
                         self.sous_label = sous_lien.find('label').text
                         sous_command = sous_lien.find('command').text
-
-                        truc_sous_menu.add_command(label=self.sous_label, command= lambda: self.niveau(self.sous_label))
-
-                        """ if nb_sous_menu == 1 and nb_sous_lien == 1:
-                            truc_sous_menu.add_command(label=self.sous_label, command= lambda: self.niveau("Developpeur"))
+                        nom_sous_lien += [self.sous_label]
+                        if nb_sous_menu == 1 and nb_sous_lien == 1:
+                            truc_sous_menu.add_command(label=self.sous_label, command= 
+                                                       lambda: self.niveau(nom_sous_lien[nb_sous_lien-nb_label_sous_lien]))
+                                                             # self.niveau(0)
                         if nb_sous_menu == 1 and nb_sous_lien == 2:
-                            truc_sous_menu.add_command(label=self.sous_label, command= lambda: self.niveau("Designer")) """
+                            truc_sous_menu.add_command(label=self.sous_label, command= 
+                                                       lambda: self.niveau(nom_sous_lien[nb_sous_lien-(nb_label_sous_lien+x-1)]))
+                                                             # self.niveau(1)
+                        if nb_sous_menu == 1 and nb_sous_lien == 3:
+                            truc_sous_menu.add_command(label=self.sous_label, command= 
+                                                       lambda: self.niveau(nom_sous_lien[nb_sous_lien-(nb_label_sous_lien+x-2)]))
+                                                             # self.niveau(2)
+                        if nb_sous_menu == 1 and nb_sous_lien == 4:
+                            truc_sous_menu.add_command(label=self.sous_label, command= 
+                                                       lambda: self.niveau(nom_sous_lien[nb_sous_lien-(nb_label_sous_lien+x-3)]))
+                                                             # self.niveau(3)
+                        if nb_sous_menu == 1 and nb_sous_lien == 5:
+                            truc_sous_menu.add_command(label=self.sous_label, command= 
+                                                       lambda: self.niveau(nom_sous_lien[nb_sous_lien-(nb_label_sous_lien+x-4)]))
+                                                             # self.niveau(4)
+                        x -= 1
+                        #print(x)
 
-                        #truc_sous_menu.add_command(label=self.sous_label, command=sous_command)
                     sous_label_up = sous_menu.attrib['categorie'].capitalize()
                     truc_menu.add_cascade(label=sous_label_up, menu=truc_sous_menu)
                 if nb_sous_menu == 0:
@@ -192,6 +214,7 @@ class App(object):
                 
     def sql(self):
         self.mydb = sqlite3.connect('bdd.sqlite')
+        #self.mydb = sqlite3.connect('bdd_base.sqlite')
         self.cursor = self.mydb.cursor()
         self.statement = self.cursor.execute('SELECT * FROM mots WHERE theme="'+  self.theme +'"')
 
@@ -210,6 +233,7 @@ class App(object):
         for k in range(0, int((23-len(self.find_mot))/2)):
             mot_tire += ' '
         Label(self.root, text=(mot_tire)).grid(row=6, column=4, columnspan=3)
+        Label(self.root, text="                          ").grid(row=5, column=4, columnspan=3)
         self.find_mot
 
     def tracer(self):
@@ -227,6 +251,14 @@ class App(object):
             #print("erreur: " + str(self.cpt)) 
             if self.cpt == 10:
                 print("👎🏼 Perdu!")
+                correction = ''
+                for a in range(0, len(self.find_mot)*2):
+                    if a % 2 == 0:
+                        indice = a/2
+                        correction += self.find_mot[int(indice)].upper()
+                    if a % 2 != 0:
+                        correction += ' '
+                Label(self.root, text=correction).grid(row=5, column=4, columnspan=3)
                 image=Image.open('pouce_blanc_bas.gif')
                 img=image.resize((128, 128))
                 my_img=ImageTk.PhotoImage(img)
@@ -257,7 +289,7 @@ class App(object):
                activebackground="grey", relief=RIDGE).\
             grid(row = r, column = c)
         Label(self.root, text=(self.mot_floute)).grid(row=6, column=4, columnspan=3)
-        
+
         ### verif gagnant ###
         gagne = 0
         for d in range(0, len(self.mot_floute)): 
@@ -323,6 +355,7 @@ class App(object):
             niveau = listeCombo.get()
             new_mot = myEntry.get()
             mydb = sqlite3.connect('bdd.sqlite')
+            #mydb = sqlite3.connect('bdd_base.sqlite')
             cursor = mydb.cursor()
             cursor.execute('INSERT INTO mots(mot, theme) VALUES("' + new_mot + '", "' + niveau + '")')
             print(new_mot + " a été ajouté en " + listeCombo.get() + " dans la BDD")
@@ -335,14 +368,21 @@ class App(object):
         myEntry = tk.Entry(fenetre, width=35, justify=CENTER)
         myEntry.pack(pady=10)
         self.mydb = sqlite3.connect('bdd.sqlite')
+        #self.mydb = sqlite3.connect('bdd_base.sqlite')
         self.cursor = self.mydb.cursor()
         self.statement = self.cursor.execute('SELECT DISTINCT theme FROM mots')
+
+
         listeProduits=[]
         self.liste_theme = self.statement.fetchall()
+        print('self.liste_theme: ' + str(self.liste_theme))
         for j in range(0, len(self.liste_theme)):
             theme_brut = str(self.liste_theme[j])
-            theme_doux = theme_brut[2:len(self.liste_theme)-5]
+            print(str(j) + ' theme_brut: ' + theme_brut)
+            theme_doux = theme_brut[2:len(theme_brut)-3]
             listeProduits += [theme_doux]
+
+
         self.cursor.close()
         self.mydb.close()
         listeCombo = ttk.Combobox(fenetre, values=listeProduits)
@@ -358,25 +398,27 @@ class App(object):
     def edit_niveau(self):
         print("Edition des niveaux")
 
-        """ import tkinter as tk
+        import tkinter as tk
         from tkinter import ttk
         fenetre = tk.Tk()
         fenetre.title("Ajout de theme")
         fenetre.geometry("300x160")
         def getEntry():
             theme = myEntry.get()
-            mot = myEntry2.get() """
-        """ mydb = sqlite3.connect('bdd.sqlite')
+            mot = myEntry2.get()
+            mydb = sqlite3.connect('bdd.sqlite')
+            #mydb = sqlite3.connect('bdd_base.sqlite')
             cursor = mydb.cursor()
             cursor.execute('INSERT INTO mots(mot, theme) VALUES("' + mot + '", "' + theme + '")')
             print(mot + " a été ajouté en " + theme + " dans la BDD")
             mydb.commit()
             cursor.close()
-            mydb.close() """
+            mydb.close()
 
             #modif xml
             
-        """ fichier_xml = "menus.xml"
+            fichier_xml = "menus.xml"
+            #fichier_xml = "menus_base.xml"
             tree = ET.parse(fichier_xml)
             myroot = tree.getroot()
 
@@ -386,16 +428,20 @@ class App(object):
                         if sous_menu.attrib['categorie'] == "Niveaux":
                             print("menu niveau")
                         nb_souslien = 0
+                        x = 0
                         for sous_lien in sous_menu.findall('lien'):
                             nb_souslien += 1
                             self.sous_label = sous_lien.find('label').text
-                            print(self.sous_label)
-                        if sous_menu.attrib['categorie'] == "Niveaux":
-                            print(nb_souslien)
-                            new_lien = ET.SubElement(lien, 'lien')
-                            new_label = ET.SubElement(new_lien, 'label')
-                            new_command = ET.SubElement(new_label, 'command')
-
+                            if sous_menu.attrib['categorie'] == "Niveaux":
+                                if x == 0:
+                                    x += 1
+                                    new_lien = ET.SubElement(sous_menu, 'lien')
+                                    new_label = ET.SubElement(new_lien, 'label')
+                                    new_label.text = theme
+                                    new_command = ET.SubElement(new_lien, 'command')
+                                    new_command.text = 'lambda: self.niveau("' + theme + '")'
+                                    tree.write("menus.xml")
+                                    #tree.write("menus_base.xml")
             self.new_party()
 
         texte1 = tk.Label(fenetre, text="Ajouter un theme")
@@ -413,7 +459,7 @@ class App(object):
         btn2 = tk.Button(fenetre, height=1, width=10, text = "Quitter", command=fenetre.destroy)
         btn2.pack(side=RIGHT, padx=40)
 
-        fenetre.mainloop() """
+        fenetre.mainloop()
 
 
 if __name__ == '__main__': 
